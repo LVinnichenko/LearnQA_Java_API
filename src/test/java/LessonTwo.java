@@ -27,4 +27,26 @@ public class LessonTwo {
         String headers = response.getHeader("location");
         System.out.println(headers);
     }
+
+    @Test
+    public void ex7Test() {
+        int respCode = 0;
+        int count = 0;
+        String location = "https://playground.learnqa.ru/api/long_redirect";
+
+        while (respCode != 200) {
+            Response response = RestAssured
+                    .given()
+                    .redirects()
+                    .follow(false)
+                    .get(location)
+                    .andReturn();
+            response.prettyPrint();
+
+            location = response.getHeader("location");
+            respCode = response.getStatusCode();
+            count++;
+        }
+        System.out.println(count);
+    }
 }
