@@ -2,6 +2,9 @@ import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
+import java.lang.Thread;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class LessonTwo {
 
@@ -48,5 +51,46 @@ public class LessonTwo {
             count++;
         }
         System.out.println(count);
+    }
+    @Test
+    public void ex8Test() throws InterruptedException {
+        //создание задачи и получение токена и time
+        JsonPath resp = createTask();
+        int time = resp.get("seconds");
+        String token = resp.get("token");
+
+        //вызов метода до того, как задача будет готова, проверка статуса задачи
+        JsonPath resp_with_status = getResp(token);
+        String status = resp_with_status.get("status");
+        assertEquals(status,"Job is NOT ready");
+
+        //ожидание готовности задачи
+        long pause = Long.valueOf(time)*1000;
+        Thread.sleep(pause);
+
+        //вызов метода после готовности задачи
+        JsonPath resp_after_sleep = getResp(token);
+        //проверка статуса задачи
+        String status_after_sleep = resp_after_sleep.get("status");
+        assertEquals(status_after_sleep,"Job is ready");
+        //проверка наличия результата
+        String result = resp_after_sleep.get("result");
+        assertNotNull(result);
+    }
+
+    private JsonPath createTask() {
+        JsonPath response = RestAssured
+                .given()
+                .get("https://playground.learnqa.ru/ajax/api/longtime_job")
+                .jsonPath();
+        return response;
+    }
+    private JsonPath getResp(String token) {
+        JsonPath response = RestAssured
+                .given()
+                .queryParam("token", token)
+                .get("https://playground.learnqa.ru/ajax/api/longtime_job")
+                .jsonPath();
+        return response;
     }
 }
